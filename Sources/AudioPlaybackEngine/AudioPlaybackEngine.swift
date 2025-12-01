@@ -2,14 +2,14 @@ import Foundation
 import AVFoundation
 
 public protocol AudioPlaybackDelegate: AnyObject {
-    func playbackDidUpdateProgress(_ manager: AudioPlaybackEngine, current: Double, duration: Double)
-    func playbackDidChangeState(_ manager: AudioPlaybackEngine, isPlaying: Bool)
-    func playbackDidUpdateFavorites(_ manager: AudioPlaybackEngine, favorites: Set<String>)
-    func playbackDidUpdatePins(_ manager: AudioPlaybackEngine, pins: [Double])
+    @MainActor func playbackDidUpdateProgress(_ manager: AudioPlaybackEngine, current: Double, duration: Double)
+    @MainActor func playbackDidChangeState(_ manager: AudioPlaybackEngine, isPlaying: Bool)
+    @MainActor func playbackDidUpdateFavorites(_ manager: AudioPlaybackEngine, favorites: Set<String>)
+    @MainActor func playbackDidUpdatePins(_ manager: AudioPlaybackEngine, pins: [Double])
 }
 
 @MainActor
-public class AudioPlaybackEngine: NSObject {
+open class AudioPlaybackEngine: NSObject {
     public static let shared = AudioPlaybackEngine()
     public weak var favoritesProvider: FavoritesProvider?
     private var player: AVPlayer?
