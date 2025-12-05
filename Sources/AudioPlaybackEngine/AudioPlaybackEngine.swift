@@ -42,6 +42,8 @@ open class AudioPlaybackEngine: NSObject {
     }
     public func setRate(_ rate: Float) {
         player?.rate = rate
+        guard player?.rate != 0 else { return }
+        delegate?.playbackDidChangeState(self, isPlaying: true)
     }
     public func getDuration() -> Double {
         player?.currentItem?.asset.duration.seconds ?? 0
