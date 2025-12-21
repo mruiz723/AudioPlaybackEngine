@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 
 public protocol AudioPlaybackDelegate: AnyObject {
+    
     @MainActor func playbackDidUpdateProgress(_ manager: AudioPlaybackEngine, current: Double, duration: Double)
     @MainActor func playbackDidChangeState(_ manager: AudioPlaybackEngine, isPlaying: Bool)
     @MainActor func playbackDidUpdateFavorites(_ manager: AudioPlaybackEngine, favorites: Set<String>)
@@ -10,6 +11,7 @@ public protocol AudioPlaybackDelegate: AnyObject {
 
 @MainActor
 open class AudioPlaybackEngine: NSObject {
+    
     public static let shared = AudioPlaybackEngine()
     public weak var favoritesProvider: FavoritesProvider?
     private var player: AVPlayer?
@@ -22,29 +24,43 @@ open class AudioPlaybackEngine: NSObject {
     
     // Core playback
     public func configure(url: URL, episodeID: String) {
+        // Remove old observer and reset player before creating a new one
+        if let token = timeObserverToken {
+            player?.removeTimeObserver(token)
+            timeObserverToken = nil
+        }
+        player?.pause() // Stop old audio immediately
+        // Init new state
         player = AVPlayer(url: url)
         self.episodeID = episodeID
         addObservers()
         loadFavorites()
         loadPins()
+        // This prevents the "sticky" timestamp from the previous episode.
+        delegate?.playbackDidUpdateProgress(self, current: 0, duration: 0)
     }
+    
     public func play() {
         player?.play()
         delegate?.playbackDidChangeState(self, isPlaying: true)
     }
+    
     public func pause() {
         player?.pause()
         delegate?.playbackDidChangeState(self, isPlaying: false)
     }
+    
     public func seek(to seconds: Double) {
         let cmTime = CMTime(seconds: seconds, preferredTimescale: 1)
         player?.seek(to: cmTime)
     }
+    
     public func setRate(_ rate: Float) {
         player?.rate = rate
         guard player?.rate != 0 else { return }
         delegate?.playbackDidChangeState(self, isPlaying: true)
     }
+    
     public func getDuration() -> Double {
         player?.currentItem?.asset.duration.seconds ?? 0
     }
